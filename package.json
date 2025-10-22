@@ -1,0 +1,36 @@
+{
+  "name": "giggle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WhatsApp-based stablecoin payment system",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter api dev",
+    "dev:agent": "pnpm --filter agents dev",
+    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:agent\"",
+    "build": "pnpm -r build",
+    "start": "pnpm --filter api start",
+    "migrate": "cd apps/api && pnpm tsx scripts/migrate.ts",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test -- --watch",
+    "typecheck": "pnpm -r typecheck",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist packages/*/dist",
+    "setup": "pnpm install && pnpm migrate"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.2.5"
+  }
+}
