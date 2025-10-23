@@ -1,11 +1,13 @@
-import { LitNodeClient } from '@litprotocol/lit-node-client';
+import { LitNodeClient } from '@lit-protocol/lit-node-client';
 import { config } from '../config';
 
 /**
  * Lit Protocol service for delegated signing and scheduled transactions
  *
- * This uses Lit Protocol's "Vincent" feature for scoped delegations,
+ * This uses Lit Protocol's Vincent Ability SDK for scoped delegations,
  * allowing users to grant limited permissions for automated payments.
+ *
+ * Based on official docs: https://docs.heyvincent.ai/api-reference/ability-sdk/README
  */
 export class LitService {
   private client: LitNodeClient | null = null;
@@ -16,7 +18,7 @@ export class LitService {
   }
 
   /**
-   * Initialize Lit client
+   * Initialize Lit client with v7 API
    */
   async initialize(): Promise<void> {
     if (this.client) return;
@@ -28,7 +30,8 @@ export class LitService {
       });
 
       await this.client.connect();
-      console.log('✅ Lit Protocol client connected');
+      console.log('✅ Lit Protocol v7 client connected');
+      console.log(`   Network: ${this.network}`);
     } catch (error) {
       console.error('Failed to initialize Lit Protocol client:', error);
       throw error;

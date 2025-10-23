@@ -1,11 +1,24 @@
 import twilio from 'twilio';
 import { config } from '../config';
 
+/**
+ * Twilio WhatsApp Messaging Service
+ *
+ * Integration based on official docs:
+ * https://www.twilio.com/docs/whatsapp/quickstart
+ *
+ * Features:
+ * - Message templates for business-initiated messages
+ * - 24-hour service window for freeform messages
+ * - Media support for QR codes and receipts
+ */
+
 const twilioClient = twilio(config.twilio.accountSid, config.twilio.authToken);
 
 export class MessagingService {
   /**
-   * Send a WhatsApp message
+   * Send a WhatsApp message (freeform text)
+   * Note: Can only be used within 24-hour window after user message
    */
   async sendWhatsAppMessage(to: string, body: string): Promise<string> {
     try {
@@ -17,6 +30,29 @@ export class MessagingService {
       return message.sid;
     } catch (error) {
       console.error('Failed to send WhatsApp message:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Send a WhatsApp message using a pre-approved template
+   * Templates can be used for business-initiated messages outside the 24-hour window
+   */
+  async sendWhatsAppTemplate(
+    to: string,
+    contentSid: string,
+    contentVariables?: Record<string, string>
+  ): Promise<string> {
+    try {
+      const message = await twilioClient.messages.create({
+        from: config.twilio.whatsappNumber,
+        to: `whatsapp:${to}`,
+        contentSid,
+        contentVariables: contentVariables ? JSON.stringify(contentVariables) : undefined,
+      });
+      return message.sid;
+    } catch (error) {
+      console.error('Failed to send WhatsApp template message:', error);
       throw error;
     }
   }
