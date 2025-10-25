@@ -76,7 +76,7 @@ export class LitService {
       validUntil?: Date;
     };
   }): Promise<{ delegationId: string; ipfsCid: string }> {
-    const { userId, pkpPublicKey, scope } = params;
+    const { userId, scope } = params;
 
     // In production, this would:
     // 1. Create a Lit Action with the scope rules
@@ -85,7 +85,7 @@ export class LitService {
     // 4. Return the delegation ID and IPFS CID
 
     // Mock implementation
-    const litAction = this.generateLitAction(scope);
+    this.generateLitAction(scope);
     const ipfsCid = `Qm${userId.replace(/-/g, '').slice(0, 44)}`; // Mock IPFS CID
 
     return {
@@ -156,7 +156,7 @@ export class LitService {
   /**
    * Execute a delegated transaction
    */
-  async executeDelegatedTransaction(params: {
+  async executeDelegatedTransaction(_params: {
     delegationId: string;
     ipfsCid: string;
     txParams: {
@@ -165,8 +165,6 @@ export class LitService {
       recipient: string;
     };
   }): Promise<{ approved: boolean; signature?: string; reason?: string }> {
-    const { ipfsCid, txParams } = params;
-
     // In production, this would:
     // 1. Load the Lit Action from IPFS
     // 2. Execute it with the transaction parameters
@@ -191,7 +189,7 @@ export class LitService {
   /**
    * Get active delegations for a user
    */
-  async getUserDelegations(userId: string): Promise<any[]> {
+  async getUserDelegations(_userId: string): Promise<any[]> {
     // In production, this would query the blockchain for PKP permissions
     return [];
   }

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import QRCode from 'qrcode';
-import { config } from '../config';
 
 const router = Router();
 

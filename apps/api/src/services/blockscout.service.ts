@@ -27,7 +27,7 @@ export class BlockscoutService {
         `${this.baseUrl}?module=transaction&action=gettxinfo&txhash=${txHash}`
       );
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (data.status === '1' && data.result) {
         return data.result as BlockscoutTransaction;
@@ -49,7 +49,7 @@ export class BlockscoutService {
         `${this.baseUrl}?module=transaction&action=gettxreceiptstatus&txhash=${txHash}`
       );
 
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (data.status === '1' && data.result) {
         return data.result.status === '1' ? 'confirmed' : 'failed';
@@ -95,7 +95,7 @@ export class BlockscoutService {
       }
 
       const response = await fetch(url);
-      const data = await response.json();
+      const data: any = await response.json();
 
       if (data.status === '1' && data.result) {
         return data.result.slice(0, limit);

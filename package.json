@@ -8,27 +8,26 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "pnpm --filter api dev",
-    "dev:agent": "pnpm --filter agents dev",
-    "dev:all": "concurrently \"pnpm dev\" \"pnpm dev:agent\"",
-    "build": "pnpm -r build",
-    "start": "pnpm --filter api start",
-    "migrate": "cd apps/api && pnpm tsx scripts/migrate.ts",
-    "lint": "pnpm -r lint",
-    "lint:fix": "pnpm -r lint --fix",
+    "dev": "npm run dev --workspace=api",
+    "dev:agent": "npm run dev --workspace=agents",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:agent\"",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm run start --workspace=api",
+    "migrate": "cd apps/api && npm run tsx scripts/migrate.ts",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:fix": "npm run lint --workspaces --if-present -- --fix",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "test": "pnpm -r test",
-    "test:watch": "pnpm -r test -- --watch",
-    "typecheck": "pnpm -r typecheck",
+    "test": "npm run test --workspaces --if-present",
+    "test:watch": "npm run test --workspaces --if-present -- --watch",
+    "typecheck": "npm run typecheck --workspaces --if-present",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules apps/*/dist packages/*/dist",
-    "setup": "pnpm install && pnpm migrate"
+    "setup": "npm install && npm run migrate"
   },
   "engines": {
     "node": ">=18.0.0",
-    "pnpm": ">=8.0.0"
+    "npm": ">=8.0.0"
   },
-  "packageManager": "pnpm@8.15.0",
   "devDependencies": {
     "concurrently": "^8.2.2",
     "prettier": "^3.2.5"

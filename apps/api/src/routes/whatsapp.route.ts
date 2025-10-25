@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { MessagingResponse } from 'twilio/lib/twiml/MessagingResponse';
+import MessagingResponse = require('twilio/lib/twiml/MessagingResponse');
 import { parseCommand, normalizeRecipient } from '../utils/parser';
 import { userService } from '../services/user.service';
 import { transactionService } from '../services/transaction.service';
@@ -102,7 +102,7 @@ router.post('/', async (req: Request, res: Response) => {
  */
 async function handleLinkCommand(
   userId: string,
-  phoneNumber: string,
+  _phoneNumber: string,
   twiml: MessagingResponse
 ): Promise<void> {
   const qrUrl = `${config.baseUrl}/deeplink/${userId}`;

@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { eq, and, lte } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { db, pendingIntents } from '../db';
 import { messagingService } from './messaging.service';
 import { litService } from './lit.service';

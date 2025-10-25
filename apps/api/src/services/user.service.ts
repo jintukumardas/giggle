@@ -17,12 +17,12 @@ export class UserService {
     }
 
     const now = new Date();
-    const newUser = {
+    const newUser: User = {
       id: randomUUID(),
       phoneNumber,
-      walletAddress: null,
-      wcSessionTopic: null,
-      litPkpPublicKey: null,
+      walletAddress: undefined,
+      wcSessionTopic: undefined,
+      litPkpPublicKey: undefined,
       dailyLimit: 100,
       isLocked: false,
       createdAt: now,
@@ -31,7 +31,7 @@ export class UserService {
 
     await db.insert(users).values(newUser);
 
-    return newUser as User;
+    return newUser;
   }
 
   /**
