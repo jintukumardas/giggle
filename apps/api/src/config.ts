@@ -1,7 +1,9 @@
 import { config as dotenvConfig } from 'dotenv';
+import { resolve } from 'path';
 import { AppConfig } from './types';
 
-dotenvConfig();
+// Load .env from the project root (two levels up from src/)
+dotenvConfig({ path: resolve(__dirname, '../../../.env') });
 
 function getEnv(key: string, defaultValue?: string): string {
   const value = process.env[key] || defaultValue;
@@ -22,14 +24,14 @@ export const config: AppConfig = {
     verifySignatures: getEnv('TWILIO_VERIFY_SIGNATURES', 'false') === 'true',
   },
   blockchain: {
-    chainId: parseInt(getEnv('CHAIN_ID', '84532'), 10),
-    rpcUrl: getEnv('RPC_URL', 'https://sepolia.base.org'),
-    chainName: getEnv('CHAIN_NAME', 'Base Sepolia'),
+    chainId: parseInt(getEnv('CHAIN_ID', '11155111'), 10),
+    rpcUrl: getEnv('RPC_URL', 'https://ethereum-sepolia-rpc.publicnode.com'),
+    chainName: getEnv('CHAIN_NAME', 'Ethereum Sepolia'),
     pyusdAddress: getEnv('PYUSD_ADDRESS', '0x0000000000000000000000000000000000000000'),
-    usdcAddress: getEnv('USDC_ADDRESS', '0x036CbD53842c5426634e7929541eC2318f3dCF7e'),
+    usdcAddress: getEnv('USDC_ADDRESS', '0x0000000000000000000000000000000000000000'),
   },
   blockscout: {
-    apiUrl: getEnv('BLOCKSCOUT_API_URL', 'https://base-sepolia.blockscout.com/api'),
+    apiUrl: getEnv('BLOCKSCOUT_API_URL', 'https://eth-sepolia.blockscout.com/api'),
   },
   pyth: {
     endpoint: getEnv('PYTH_ENDPOINT', 'https://hermes.pyth.network'),
@@ -47,5 +49,8 @@ export const config: AppConfig = {
   limits: {
     defaultDailyLimit: parseFloat(getEnv('DEFAULT_DAILY_LIMIT', '100')),
     maxDailyLimit: parseFloat(getEnv('MAX_DAILY_LIMIT', '1000')),
+  },
+  openai: {
+    apiKey: getEnv('OPENAI_API_KEY', ''),
   },
 };

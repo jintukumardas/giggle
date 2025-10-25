@@ -81,6 +81,19 @@ export class UserService {
   }
 
   /**
+   * Update user fields
+   */
+  async updateUser(userId: string, updates: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<void> {
+    await db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+  }
+
+  /**
    * Get user by ID
    */
   async getUserById(userId: string): Promise<User | null> {

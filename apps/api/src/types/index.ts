@@ -84,6 +84,7 @@ export interface User {
   id: string;
   phoneNumber: string;
   walletAddress?: string;
+  pinHash?: string;
   wcSessionTopic?: string;
   litPkpPublicKey?: string;
   dailyLimit: number;
@@ -185,5 +186,8 @@ export interface AppConfig {
   limits: {
     defaultDailyLimit: number;
     maxDailyLimit: number;
+  };
+  openai: {
+    apiKey: string;
   };
 }

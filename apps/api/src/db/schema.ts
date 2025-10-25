@@ -5,6 +5,7 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   phoneNumber: text('phone_number').notNull().unique(),
   walletAddress: text('wallet_address'),
+  pinHash: text('pin_hash'), // Hashed PIN for transaction approval
   wcSessionTopic: text('wc_session_topic'),
   litPkpPublicKey: text('lit_pkp_public_key'),
   dailyLimit: real('daily_limit').default(100),

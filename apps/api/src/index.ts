@@ -9,6 +9,9 @@ import deeplinkRouter from './routes/deeplink.route';
 
 const app: Express = express();
 
+// Trust proxy - required for ngrok and other proxies
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable for QR code pages

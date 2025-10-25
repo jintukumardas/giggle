@@ -99,23 +99,26 @@ export class MessagingService {
    * Format help message
    */
   getHelpMessage(): string {
-    return `🤖 *Giggle - WhatsApp Stablecoin Payments*
+    return `👋 *Welcome to PYUSD Wallet!*
 
-📱 *Commands:*
+Send and receive PYUSD using just phone numbers. No wallet addresses needed!
 
-• \`/link\` - Link your wallet
-• \`send 10 pyusd to @alice\` - Send tokens
-• \`send 5 usdc to +1234567890\` - Send to phone
-• \`request 5 usdc from @bob\` - Request payment
-• \`balance\` - Check your balance
-• \`history\` - View transactions
-• \`schedule 3 pyusd to @maya on Friday 9am\` - Schedule payment
-• \`set limit 50/day\` - Set daily limit
-• \`lock\` - Lock outgoing transfers
-• \`unlock\` - Unlock transfers
-• \`/help\` - Show this message
+💬 *Just chat naturally:*
 
-⚠️ *Testnet only. No real money.*`;
+• "Send $10 to +1234567890"
+• "What's my balance?"
+• "Show my account"
+• "Show my transaction history"
+• "Request $20 from +1987654321"
+
+🔐 *Security:*
+
+• "Set PIN 1234" - Set up a 4-6 digit PIN
+• Enter your PIN to confirm transactions
+
+📱 *Your phone number is your account* - we automatically create and manage your Ethereum wallet for you!
+
+⚠️ *Ethereum Sepolia testnet only. No real money.*`;
   }
 
   /**
@@ -143,24 +146,24 @@ export class MessagingService {
     type: 'send' | 'receive',
     amount: string,
     token: string,
-    peer: string,
+    peerAddress: string,
     txHash?: string,
-    blockscoutUrl?: string
+    explorerUrl?: string
   ): string {
     const emoji = type === 'send' ? '✅📤' : '✅📥';
     const action = type === 'send' ? 'Sent' : 'Received';
-    const direction = type === 'send' ? 'to' : 'from';
+    const direction = type === 'send' ? 'To' : 'From';
 
     let message = `${emoji} *${action}!*\n\n`;
     message += `Amount: ${amount} ${token.toUpperCase()}\n`;
-    message += `${direction.charAt(0).toUpperCase() + direction.slice(1)}: ${peer}\n`;
+    message += `${direction}: ${peerAddress}\n`;
 
     if (txHash) {
-      message += `\nTx: ${txHash.slice(0, 10)}...${txHash.slice(-8)}`;
+      message += `\nTransaction: ${txHash}`;
     }
 
-    if (blockscoutUrl) {
-      message += `\n\n🔍 View on Blockscout:\n${blockscoutUrl}`;
+    if (explorerUrl) {
+      message += `\n\n🔍 View on Explorer:\n${explorerUrl}`;
     }
 
     return message;
@@ -185,6 +188,129 @@ export class MessagingService {
    */
   formatInfoMessage(info: string): string {
     return `ℹ️ ${info}`;
+  }
+
+  /**
+   * Format transaction confirmation request
+   */
+  formatTransactionConfirmationRequest(params: {
+    type: 'send' | 'request';
+    amount: string;
+    recipientPhone: string;
+    senderBalance?: string;
+    requirePin: boolean;
+  }): string {
+    const { type, amount, recipientPhone, senderBalance, requirePin } = params;
+
+    if (type === 'send') {
+      let message = `💸 *Confirm Transaction*\n\n`;
+      message += `Amount: *$${amount} PYUSD*\n`;
+      message += `To: ${recipientPhone}\n`;
+
+      if (senderBalance) {
+        message += `Your balance: $${senderBalance} PYUSD\n`;
+      }
+
+      if (requirePin) {
+        message += `\n🔐 *Reply with your 4-6 digit PIN to confirm*\n`;
+        message += `❌ Reply "CANCEL" to cancel`;
+      } else {
+        message += `\n✅ Reply "YES" or "CONFIRM" to send\n`;
+        message += `❌ Reply "NO" or "CANCEL" to cancel`;
+      }
+
+      message += `\n\n⏱️ This confirmation expires in 5 minutes`;
+
+      return message;
+    } else {
+      let message = `💰 *Confirm Payment Request*\n\n`;
+      message += `Amount: *$${amount} PYUSD*\n`;
+      message += `From: ${recipientPhone}\n`;
+      message += `\n✅ Reply "YES" to send request\n`;
+      message += `❌ Reply "NO" to cancel`;
+
+      return message;
+    }
+  }
+
+  /**
+   * Format transaction cancelled message
+   */
+  formatTransactionCancelled(): string {
+    return `❌ *Transaction Cancelled*\n\nYour pending transaction has been cancelled.`;
+  }
+
+  /**
+   * Format transaction expired message
+   */
+  formatTransactionExpired(): string {
+    return `⏱️ *Transaction Expired*\n\nYour pending transaction has expired. Please try again.`;
+  }
+
+  /**
+   * Format insufficient balance error
+   */
+  formatInsufficientBalance(balance: string, required: string): string {
+    return `❌ *Insufficient Balance*\n\nYou need $${required} PYUSD but only have $${balance} PYUSD.\n\n💡 You can request funds from another user or get testnet tokens.`;
+  }
+
+  /**
+   * Format wallet info message
+   */
+  formatWalletInfo(params: {
+    address: string;
+    formattedAddress: string;
+    pyusdBalance: string;
+    ethBalance: string;
+    explorerUrl: string;
+  }): string {
+    const { address, pyusdBalance, ethBalance, explorerUrl } = params;
+
+    let message = `💳 *Your Wallet*\n\n`;
+    message += `🔑 Address: ${address}\n\n`;
+    message += `💰 *Balances:*\n`;
+    message += `• PYUSD: $${parseFloat(pyusdBalance).toFixed(2)}\n`;
+    message += `• ETH: ${parseFloat(ethBalance).toFixed(4)} (gas)\n\n`;
+    message += `🔍 View on Explorer:\n${explorerUrl}`;
+
+    return message;
+  }
+
+  /**
+   * Format transaction history
+   */
+  formatTransactionHistory(transactions: any[], getExplorerUrl?: (txHash: string) => string): string {
+    if (!transactions || transactions.length === 0) {
+      return `📝 *Transaction History*\n\nNo transactions yet. Send your first PYUSD!`;
+    }
+
+    let message = `📝 *Recent Transactions*\n\n`;
+
+    transactions.slice(0, 5).forEach((tx, index) => {
+      const emoji = tx.type === 'send' ? '📤' : '📥';
+      const direction = tx.type === 'send' ? 'To' : 'From';
+      const peerAddress = tx.type === 'send' ? tx.recipient : tx.sender;
+
+      message += `${emoji} $${tx.amount} ${tx.token}\n`;
+      if (peerAddress) {
+        message += `   ${direction}: ${peerAddress.slice(0, 6)}...${peerAddress.slice(-4)}\n`;
+      }
+      message += `   ${new Date(tx.createdAt).toLocaleDateString()}\n`;
+
+      if (tx.txHash && getExplorerUrl) {
+        message += `   🔍 ${getExplorerUrl(tx.txHash)}\n`;
+      }
+
+      if (index < transactions.length - 1 && index < 4) {
+        message += `\n`;
+      }
+    });
+
+    if (transactions.length > 5) {
+      message += `\n... and ${transactions.length - 5} more`;
+    }
+
+    return message;
   }
 }
 
