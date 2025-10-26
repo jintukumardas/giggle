@@ -50,7 +50,7 @@ const SetPinIntentSchema = z.object({
 const CreateCouponIntentSchema = z.object({
   type: z.literal('createCoupon'),
   amount: z.string(),
-  token: z.enum(['PYUSD', 'USDC']).default('PYUSD'),
+  token: z.enum(['PYUSD']).default('PYUSD'),
   message: z.string().optional(),
   expiryDays: z.number().optional().default(0), // 0 = no expiry
 });
@@ -63,6 +63,10 @@ const RedeemCouponIntentSchema = z.object({
 const CheckCouponIntentSchema = z.object({
   type: z.literal('checkCoupon'),
   code: z.string().optional(), // If empty, list all user's coupons
+});
+
+const ListCouponsIntentSchema = z.object({
+  type: z.literal('listCoupons'),
 });
 
 const UnknownIntentSchema = z.object({
@@ -83,6 +87,7 @@ const IntentSchema = z.discriminatedUnion('type', [
   CreateCouponIntentSchema,
   RedeemCouponIntentSchema,
   CheckCouponIntentSchema,
+  ListCouponsIntentSchema,
   UnknownIntentSchema,
 ]);
 
@@ -99,6 +104,7 @@ export type SetPinIntent = z.infer<typeof SetPinIntentSchema>;
 export type CreateCouponIntent = z.infer<typeof CreateCouponIntentSchema>;
 export type RedeemCouponIntent = z.infer<typeof RedeemCouponIntentSchema>;
 export type CheckCouponIntent = z.infer<typeof CheckCouponIntentSchema>;
+export type ListCouponsIntent = z.infer<typeof ListCouponsIntentSchema>;
 export type UnknownIntent = z.infer<typeof UnknownIntentSchema>;
 
 export class OpenAIService {
@@ -163,7 +169,7 @@ Available intents and their required JSON format:
 5. history - User wants to see transaction history
    Format: {"type": "history", "limit": 5}
 
-6. help - User needs help or doesn't know what to do
+6. help - User needs help, wants to know what the system can do, or asks general questions without specific action (examples: "help", "what can you do?", "what else can you do?", "what features do you have?")
    Format: {"type": "help"}
 
 7. confirm - User is confirming a pending transaction (IMPORTANT: words like "yes", "confirm", "proceed", "ok", "yeah", "yep", "sure", "accept" should ALL be recognized as confirm)
@@ -175,19 +181,22 @@ Available intents and their required JSON format:
 9. setPin - User is setting up their PIN (4-6 digit number, user says something like "set pin 1234" or "my pin is 1234")
    Format: {"type": "setPin", "pin": "1234"}
 
-10. createCoupon - User wants to create a gift coupon (says something like "create gift coupon $50", "send gift $25", "create coupon 100 PYUSD")
+10. createCoupon - User wants to create a gift coupon (phrases like "I would like to gift a coupon", "create gift", "send a gift coupon", "make a coupon". Amount is OPTIONAL - if not specified, use "5.00" as default)
    Format: {"type": "createCoupon", "amount": "50.00", "token": "PYUSD", "message": "Optional message", "expiryDays": 30}
+   - amount defaults to "5.00" if not specified by user
    - message is optional gift message
    - expiryDays defaults to 0 (no expiry), can be 7, 30, etc if user mentions "expires in 30 days"
 
 11. redeemCoupon - User wants to redeem a gift coupon (says "redeem coupon ABC12345", "use gift code XYZ", "claim coupon")
    Format: {"type": "redeemCoupon", "code": "ABC12345"}
 
-12. checkCoupon - User wants to check a coupon or see their coupons (says "check coupon ABC", "is coupon valid", "show my coupons")
+12. checkCoupon - User wants to check a specific coupon's validity (says "check coupon ABC", "is coupon ABC valid")
    Format: {"type": "checkCoupon", "code": "ABC12345"}
-   - code is optional, if not provided, list all user's coupons
 
-13. unknown - Cannot determine intent
+13. listCoupons - User wants to see all their gift coupons (says "show my coupons", "list my gift coupons", "my coupons", "what coupons do I have?")
+   Format: {"type": "listCoupons"}
+
+14. unknown - Cannot determine intent
    Format: {"type": "unknown", "originalMessage": "user's message"}
 
 IMPORTANT: Always return valid JSON matching exactly one of these formats.

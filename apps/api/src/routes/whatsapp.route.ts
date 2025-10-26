@@ -8,6 +8,8 @@ import { pendingTransactionService } from '../services/pending-transaction.servi
 import { transactionService } from '../services/transaction.service';
 import { pinService } from '../services/pin.service';
 import { onboardingService } from '../services/onboarding.service';
+import { giftCouponService } from '../services/gift-coupon.service';
+import { giftCouponDbService } from '../services/gift-coupon-db.service';
 import { TwilioWebhookPayload } from '../types';
 import { parsePhoneNumber } from 'libphonenumber-js';
 
@@ -37,6 +39,7 @@ router.post('/', async (req: Request, res: Response) => {
       await handleOnboarding(user.id, phoneNumber, Body, twiml);
       const twimLString = twiml.toString();
       console.log('Onboarding TwiML response:', twimLString);
+      console.log('Sending onboarding response with', twiml.toString().match(/<Message>/g)?.length || 0, 'messages');
       res.type('text/xml').send(twimLString);
       return;
     }
@@ -84,6 +87,25 @@ router.post('/', async (req: Request, res: Response) => {
         await handleSetPin(user.id, intent, twiml);
         break;
 
+      case 'createCoupon':
+        await handleCreateCoupon(user.id, phoneNumber, intent, twiml);
+        break;
+
+      case 'redeemCoupon':
+        await handleRedeemCoupon(user.id, phoneNumber, intent, twiml);
+        break;
+
+      case 'checkCoupon':
+        await handleCheckCoupon(intent, twiml);
+        break;
+
+      case 'listCoupons':
+        console.log('[webhook] Handling listCoupons intent for user:', user.id);
+        await handleListCoupons(user.id, phoneNumber, twiml);
+        console.log('[webhook] Finished handling listCoupons');
+        console.log('[webhook] TwiML content:', twiml.toString());
+        break;
+
       case 'unknown':
       default:
         // Check if user has pending transaction and message looks like a PIN
@@ -111,7 +133,10 @@ router.post('/', async (req: Request, res: Response) => {
         }
     }
 
-    res.type('text/xml').send(twiml.toString());
+    const twimLString = twiml.toString();
+    console.log('[webhook] Final TwiML response length:', twimLString.length);
+    console.log('[webhook] Final TwiML response:', twimLString);
+    res.type('text/xml').send(twimLString);
   } catch (error) {
     console.error('Error handling WhatsApp webhook:', error);
     twiml.message(messagingService.formatErrorMessage('An error occurred. Please try again later.'));
@@ -730,12 +755,23 @@ async function handleOnboarding(
 
           // Hash and save PIN
           const pinHash = pinService.hashPin(pin);
-          await onboardingService.handlePinSetup(userId, pinHash);
+          await userService.updateUser(userId, { pinHash });
+
+          // Set default network to Sepolia and default token to PYUSD
+          await userService.updateUser(userId, {
+            defaultNetwork: 'sepolia',
+            defaultToken: 'PYUSD',
+          });
+
+          // Complete onboarding
+          await onboardingService.completeOnboarding(userId);
 
           twiml.message(messagingService.getOnboardingPinSuccessMessage());
 
-          // Automatically show network selection
-          twiml.message(messagingService.getOnboardingNetworkMessage());
+          // Create wallet and show completion message
+          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
+          const explorerUrl = walletService.getAddressExplorerUrl(address);
+          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
         } else {
           // User sent something else, re-show PIN instructions
           const pinMsg = messagingService.getOnboardingPinMessage();
@@ -745,63 +781,12 @@ async function handleOnboarding(
         break;
 
       case 'network':
-        // Handle network selection
-        if (messageLower.includes('sepolia')) {
-          await onboardingService.handleNetworkSelection(userId, 'sepolia');
-          twiml.message(messagingService.getOnboardingNetworkSuccessMessage('Sepolia Testnet'));
-          twiml.message(messagingService.getOnboardingTokenMessage());
-        } else if (messageLower.includes('mainnet')) {
-          await onboardingService.handleNetworkSelection(userId, 'mainnet');
-          twiml.message(messagingService.getOnboardingNetworkSuccessMessage('Ethereum Mainnet'));
-          twiml.message(messagingService.getOnboardingTokenMessage());
-        } else if (messageLower.includes('skip')) {
-          // Use default (sepolia)
-          await onboardingService.handleNetworkSelection(userId, 'sepolia');
-          twiml.message(messagingService.getOnboardingNetworkSuccessMessage('Sepolia Testnet (default)'));
-          twiml.message(messagingService.getOnboardingTokenMessage());
-        } else {
-          // Invalid response, re-show network selection
-          twiml.message(messagingService.getOnboardingNetworkMessage());
-        }
-        break;
-
       case 'token':
-        // Handle token selection
-        if (messageLower.includes('pyusd')) {
-          await onboardingService.handleTokenSelection(userId, 'PYUSD');
-          await onboardingService.completeOnboarding(userId);
-
-          twiml.message(messagingService.getOnboardingTokenSuccessMessage('PYUSD'));
-
-          // Create wallet and show completion message
-          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
-          const explorerUrl = walletService.getAddressExplorerUrl(address);
-          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
-        } else if (messageLower.includes('usdc')) {
-          await onboardingService.handleTokenSelection(userId, 'USDC');
-          await onboardingService.completeOnboarding(userId);
-
-          twiml.message(messagingService.getOnboardingTokenSuccessMessage('USDC'));
-
-          // Create wallet and show completion message
-          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
-          const explorerUrl = walletService.getAddressExplorerUrl(address);
-          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
-        } else if (messageLower.includes('skip')) {
-          // Use default (PYUSD)
-          await onboardingService.handleTokenSelection(userId, 'PYUSD');
-          await onboardingService.completeOnboarding(userId);
-
-          twiml.message(messagingService.getOnboardingTokenSuccessMessage('PYUSD (default)'));
-
-          // Create wallet and show completion message
-          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
-          const explorerUrl = walletService.getAddressExplorerUrl(address);
-          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
-        } else {
-          // Invalid response, re-show token selection
-          twiml.message(messagingService.getOnboardingTokenMessage());
-        }
+        // These steps are now skipped - redirect to completed
+        await onboardingService.completeOnboarding(userId);
+        const { address: walletAddr } = await walletService.getOrCreateWallet(userId, phoneNumber);
+        const explorerUrl = walletService.getAddressExplorerUrl(walletAddr);
+        twiml.message(messagingService.getOnboardingCompletionMessage(walletAddr, explorerUrl));
         break;
 
       default:
@@ -812,6 +797,384 @@ async function handleOnboarding(
   } catch (error) {
     console.error('Error handling onboarding:', error);
     twiml.message(messagingService.formatErrorMessage('An error occurred during setup. Please try again.'));
+  }
+}
+
+/**
+ * Handle create gift coupon
+ */
+async function handleCreateCoupon(
+  userId: string,
+  phoneNumber: string,
+  intent: any,
+  twiml: MessagingResponse
+): Promise<void> {
+  try {
+    // Check if gift coupon service is configured
+    const isConfigured = await giftCouponService.isConfigured();
+    if (!isConfigured) {
+      twiml.message(
+        messagingService.formatErrorMessage(
+          'Gift coupons are not available yet. Please check back later!'
+        )
+      );
+      return;
+    }
+
+    // Send immediate response
+    twiml.message('🎁 Creating your gift coupon...\n\nThis may take a few minutes. Please check back using "show my coupons" or "available coupons".');
+
+    // Process the coupon creation in the background (don't await)
+    createCouponInBackground(userId, phoneNumber, intent).catch(error => {
+      console.error('Background coupon creation failed:', error);
+    });
+  } catch (error) {
+    console.error('Error initiating gift coupon creation:', error);
+    twiml.message(
+      messagingService.formatErrorMessage(
+        'Could not create gift coupon. ' +
+        (error instanceof Error ? error.message : 'Please try again.')
+      )
+    );
+  }
+}
+
+/**
+ * Background function to create coupon and notify user
+ */
+async function createCouponInBackground(
+  userId: string,
+  phoneNumber: string,
+  intent: any
+): Promise<void> {
+  try {
+    // Get user's wallet
+    const { wallet } = await walletService.getOrCreateWallet(userId, phoneNumber);
+
+    console.log('Creating gift coupon in background...');
+
+    const result = await giftCouponService.createCoupon({
+      wallet,
+      amount: intent.amount,
+      token: intent.token || 'PYUSD',
+      message: intent.message,
+      creatorPhone: phoneNumber,
+      expiryDays: intent.expiryDays || 0,
+    });
+
+    console.log('Gift coupon created successfully:', result.code);
+
+    // Save coupon to database
+    const expiresAt = intent.expiryDays > 0
+      ? new Date(Date.now() + intent.expiryDays * 24 * 60 * 60 * 1000)
+      : undefined;
+
+    await giftCouponDbService.saveCoupon({
+      code: result.code,
+      creatorId: userId,
+      amount: intent.amount,
+      token: intent.token || 'PYUSD',
+      message: intent.message,
+      expiresAt,
+      txHash: result.txHash,
+    });
+
+    // Get explorer URL
+    const explorerUrl = walletService.getTransactionExplorerUrl(result.txHash);
+
+    // Format response message
+    const message =
+      `✅ *Gift Coupon Created!*\n\n` +
+      `💳 Code: \`${result.code}\`\n` +
+      `💰 Amount: $${intent.amount} ${intent.token || 'PYUSD'}\n` +
+      `${intent.expiryDays ? `⏰ Expires: ${intent.expiryDays} days\n` : ''}\n` +
+      `Share this code with the recipient to redeem!\n\n` +
+      `🔗 View Transaction:\n${explorerUrl}\n\n` +
+      `💡 Your balance has been updated. Check with "What's my balance?"`;
+
+    // Send the success message to the user
+    await messagingService.sendWhatsAppMessage(phoneNumber, message);
+
+    // Log the coupon creation
+    await userService.logAudit(userId, 'coupon_created', {
+      code: result.code,
+      amount: intent.amount,
+      token: intent.token,
+      txHash: result.txHash,
+    });
+  } catch (error) {
+    console.error('Error creating gift coupon in background:', error);
+
+    // Notify user of failure
+    try {
+      await messagingService.sendWhatsAppMessage(
+        phoneNumber,
+        messagingService.formatErrorMessage(
+          'Could not create gift coupon. ' +
+          (error instanceof Error ? error.message : 'Please try again.')
+        )
+      );
+    } catch (notifyError) {
+      console.error('Failed to notify user of coupon creation failure:', notifyError);
+    }
+  }
+}
+
+/**
+ * Handle redeem gift coupon
+ */
+async function handleRedeemCoupon(
+  userId: string,
+  phoneNumber: string,
+  intent: any,
+  twiml: MessagingResponse
+): Promise<void> {
+  try {
+    // Check if gift coupon service is configured
+    const isConfigured = await giftCouponService.isConfigured();
+    if (!isConfigured) {
+      twiml.message(
+        messagingService.formatErrorMessage(
+          'Gift coupons are not available yet. Please check back later!'
+        )
+      );
+      return;
+    }
+
+    // Send immediate response
+    twiml.message('🎁 Redeeming your gift coupon...\n\nThis may take a few moments. You\'ll receive confirmation shortly.');
+
+    // Process the redemption in the background (don't await)
+    redeemCouponInBackground(userId, phoneNumber, intent).catch(error => {
+      console.error('Background coupon redemption failed:', error);
+    });
+  } catch (error) {
+    console.error('Error initiating gift coupon redemption:', error);
+    twiml.message(
+      messagingService.formatErrorMessage(
+        'Could not redeem gift coupon. ' +
+        (error instanceof Error ? error.message : 'Please try again.')
+      )
+    );
+  }
+}
+
+/**
+ * Background function to redeem coupon and notify user
+ */
+async function redeemCouponInBackground(
+  userId: string,
+  phoneNumber: string,
+  intent: any
+): Promise<void> {
+  try {
+    // Get user's wallet
+    const { wallet } = await walletService.getOrCreateWallet(userId, phoneNumber);
+
+    console.log('Redeeming gift coupon in background...');
+
+    const result = await giftCouponService.redeemCoupon(intent.code, wallet);
+
+    console.log('Gift coupon redeemed successfully:', intent.code);
+
+    // Mark coupon as redeemed in database
+    await giftCouponDbService.markAsRedeemed(intent.code, userId, result.txHash);
+
+    // Get explorer URL
+    const explorerUrl = walletService.getTransactionExplorerUrl(result.txHash);
+
+    // Format response message
+    const message =
+      `✅ *Gift Coupon Redeemed!*\n\n` +
+      `💰 You received: $${result.amount} ${result.token}\n` +
+      `${result.metadata.message ? `💌 Message: "${result.metadata.message}"\n` : ''}\n` +
+      `🔗 View Transaction:\n${explorerUrl}\n\n` +
+      `💡 Your balance has been updated. Check with "What's my balance?"`;
+
+    // Send the success message to the user
+    await messagingService.sendWhatsAppMessage(phoneNumber, message);
+
+    // Log the redemption
+    await userService.logAudit(userId, 'coupon_redeemed', {
+      code: intent.code,
+      amount: result.amount,
+      token: result.token,
+      txHash: result.txHash,
+    });
+  } catch (error) {
+    console.error('Error redeeming gift coupon in background:', error);
+
+    // Notify user of failure
+    try {
+      await messagingService.sendWhatsAppMessage(
+        phoneNumber,
+        messagingService.formatErrorMessage(
+          'Could not redeem gift coupon. ' +
+          (error instanceof Error ? error.message : 'Please try again.')
+        )
+      );
+    } catch (notifyError) {
+      console.error('Failed to notify user of coupon redemption failure:', notifyError);
+    }
+  }
+}
+
+/**
+ * Handle check gift coupon
+ */
+async function handleCheckCoupon(
+  intent: any,
+  twiml: MessagingResponse
+): Promise<void> {
+  try {
+    // Check if gift coupon service is configured
+    const isConfigured = await giftCouponService.isConfigured();
+    if (!isConfigured) {
+      twiml.message(
+        messagingService.formatErrorMessage(
+          'Gift coupons are not available yet. Please check back later!'
+        )
+      );
+      return;
+    }
+
+    if (!intent.code) {
+      twiml.message(
+        messagingService.formatInfoMessage(
+          'Please provide a coupon code to check.\n\n' +
+          'Example: "Check coupon GIFT1234"'
+        )
+      );
+      return;
+    }
+
+    // Check the coupon
+    const couponInfo = await giftCouponService.checkCoupon(intent.code);
+
+    if (!couponInfo.exists) {
+      twiml.message(
+        messagingService.formatErrorMessage(
+          `Coupon code "${intent.code}" not found.`
+        )
+      );
+      return;
+    }
+
+    // Format response message
+    let message = `🎁 *Gift Coupon Status*\n\n`;
+    message += `💳 Code: \`${intent.code}\`\n`;
+    message += `💰 Amount: $${couponInfo.amount} ${couponInfo.token}\n`;
+    message += `✅ Valid: ${couponInfo.isValid ? 'Yes' : 'No'}\n`;
+
+    if (couponInfo.expiresAt) {
+      const expiryDate = new Date(couponInfo.expiresAt);
+      message += `⏰ Expires: ${expiryDate.toLocaleDateString()}\n`;
+    }
+
+    if (couponInfo.metadata?.message) {
+      message += `💌 Message: "${couponInfo.metadata.message}"\n`;
+    }
+
+    if (!couponInfo.isValid) {
+      message += `\n⚠️ This coupon has already been redeemed or has expired.`;
+    } else {
+      message += `\n💡 To redeem, reply: "Redeem coupon ${intent.code}"`;
+    }
+
+    twiml.message(message);
+  } catch (error) {
+    console.error('Error checking gift coupon:', error);
+    twiml.message(
+      messagingService.formatErrorMessage(
+        'Could not check gift coupon. Please try again.'
+      )
+    );
+  }
+}
+
+/**
+ * Handle list user's gift coupons
+ */
+async function handleListCoupons(
+  userId: string,
+  phoneNumber: string,
+  twiml: MessagingResponse
+): Promise<void> {
+  try {
+    console.log('[handleListCoupons] Starting for userId:', userId);
+
+    // Get all coupons for this user (created and redeemed)
+    console.log('[handleListCoupons] Fetching active coupons...');
+    const activeCoupons = await giftCouponDbService.getUserActiveCoupons(userId);
+    console.log('[handleListCoupons] Active coupons count:', activeCoupons.length);
+
+    console.log('[handleListCoupons] Fetching redeemed coupons...');
+    const redeemedCoupons = await giftCouponDbService.getUserRedeemedCoupons(userId);
+    console.log('[handleListCoupons] Redeemed coupons count:', redeemedCoupons.length);
+
+    let message = `🎁 *Your Gift Coupons*\n\n`;
+
+    // Show active coupons created by user
+    if (activeCoupons.length > 0) {
+      message += `📤 *Coupons You Created (${activeCoupons.length})*\n\n`;
+      activeCoupons.forEach((coupon, index) => {
+        message += `${index + 1}. Code: \`${coupon.code}\`\n`;
+        message += `   💰 $${coupon.amount} ${coupon.token}\n`;
+        if (coupon.message) {
+          message += `   💌 "${coupon.message}"\n`;
+        }
+        message += `   📅 Created: ${new Date(coupon.createdAt).toLocaleDateString()}\n`;
+        if (coupon.expiresAt) {
+          message += `   ⏰ Expires: ${new Date(coupon.expiresAt).toLocaleDateString()}\n`;
+        }
+        message += `\n`;
+      });
+    }
+
+    // Show redeemed coupons
+    if (redeemedCoupons.length > 0) {
+      message += `📥 *Coupons You Redeemed (${redeemedCoupons.length})*\n\n`;
+      redeemedCoupons.slice(0, 5).forEach((coupon, index) => {
+        message += `${index + 1}. $${coupon.amount} ${coupon.token}\n`;
+        if (coupon.message) {
+          message += `   💌 "${coupon.message}"\n`;
+        }
+        message += `   📅 ${new Date(coupon.redeemedAt!).toLocaleDateString()}\n\n`;
+      });
+      if (redeemedCoupons.length > 5) {
+        message += `   ... and ${redeemedCoupons.length - 5} more\n\n`;
+      }
+    }
+
+    if (activeCoupons.length === 0 && redeemedCoupons.length === 0) {
+      message += `You don't have any gift coupons yet.\n\n`;
+      message += `💡 Create one with: "Create gift coupon $5"\n`;
+      message += `Or ask someone to send you a coupon code!`;
+    } else {
+      message += `💡 *Tip:* Share your coupon codes with friends to gift them PYUSD!`;
+    }
+
+    console.log('[handleListCoupons] Sending message, length:', message.length);
+
+    // Send via direct messaging service as a workaround for TwiML delivery issues
+    // This ensures reliable delivery, similar to how balance notifications work
+    try {
+      await messagingService.sendWhatsAppMessage(phoneNumber, message);
+      console.log('[handleListCoupons] Message sent via direct messaging service');
+      // Also add to twiml as fallback
+      twiml.message('✅ Coupon list sent!');
+    } catch (sendError) {
+      console.error('[handleListCoupons] Failed to send via messaging service, using twiml:', sendError);
+      // Fallback to twiml
+      twiml.message(message);
+    }
+  } catch (error) {
+    console.error('[handleListCoupons] Error listing gift coupons:', error);
+    twiml.message(
+      messagingService.formatErrorMessage(
+        'Could not retrieve your coupons. Please try again.'
+      )
+    );
   }
 }
 

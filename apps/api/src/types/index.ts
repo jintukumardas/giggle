@@ -8,14 +8,14 @@ export const LinkCommandSchema = z.object({
 export const SendCommandSchema = z.object({
   type: z.literal('send'),
   amount: z.string(),
-  token: z.enum(['pyusd', 'usdc']),
+  token: z.enum(['pyusd']),
   recipient: z.string(),
 });
 
 export const RequestCommandSchema = z.object({
   type: z.literal('request'),
   amount: z.string(),
-  token: z.enum(['pyusd', 'usdc']),
+  token: z.enum(['pyusd']),
   from: z.string(),
 });
 
@@ -31,7 +31,7 @@ export const HistoryCommandSchema = z.object({
 export const ScheduleCommandSchema = z.object({
   type: z.literal('schedule'),
   amount: z.string(),
-  token: z.enum(['pyusd', 'usdc']),
+  token: z.enum(['pyusd']),
   recipient: z.string(),
   scheduledFor: z.date(),
 });
@@ -104,7 +104,7 @@ export interface User {
 // Transaction types
 export type TransactionType = 'send' | 'receive' | 'request';
 export type TransactionStatus = 'pending' | 'confirmed' | 'failed';
-export type TokenType = 'PYUSD' | 'USDC';
+export type TokenType = 'PYUSD';
 
 export interface Transaction {
   id: string;
@@ -218,8 +218,7 @@ export interface AppConfig {
     apiKey: string;
   };
   pinata: {
-    apiKey: string;
-    secretKey: string;
+    jwt: string;
     gateway: string;
   };
   giftCoupon: {

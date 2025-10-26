@@ -43,33 +43,33 @@ export function parseCommand(body: string): Command | null {
 
   // Send command: "send 10 pyusd to +1234567890" or "send 10 pyusd to @alice"
   const sendMatch = trimmed.match(
-    /^\/?\s*send\s+(\d+(?:\.\d+)?)\s+(pyusd|usdc)\s+to\s+(.+)$/
+    /^\/?\s*send\s+(\d+(?:\.\d+)?)\s+(pyusd)\s+to\s+(.+)$/
   );
   if (sendMatch) {
     return {
       type: 'send',
       amount: sendMatch[1],
-      token: sendMatch[2] as 'pyusd' | 'usdc',
+      token: sendMatch[2] as 'pyusd',
       recipient: sendMatch[3].trim(),
     };
   }
 
-  // Request command: "request 5 usdc from @bob"
+  // Request command: "request 5 pyusd from @bob"
   const requestMatch = trimmed.match(
-    /^\/?\s*request\s+(\d+(?:\.\d+)?)\s+(pyusd|usdc)\s+from\s+(.+)$/
+    /^\/?\s*request\s+(\d+(?:\.\d+)?)\s+(pyusd)\s+from\s+(.+)$/
   );
   if (requestMatch) {
     return {
       type: 'request',
       amount: requestMatch[1],
-      token: requestMatch[2] as 'pyusd' | 'usdc',
+      token: requestMatch[2] as 'pyusd',
       from: requestMatch[3].trim(),
     };
   }
 
   // Schedule command: "schedule 3 pyusd to @maya on friday 9am"
   const scheduleMatch = trimmed.match(
-    /^\/?\s*schedule\s+(\d+(?:\.\d+)?)\s+(pyusd|usdc)\s+to\s+(.+?)\s+on\s+(.+)$/
+    /^\/?\s*schedule\s+(\d+(?:\.\d+)?)\s+(pyusd)\s+to\s+(.+?)\s+on\s+(.+)$/
   );
   if (scheduleMatch) {
     const scheduledFor = parseDateTime(scheduleMatch[4]);
@@ -77,7 +77,7 @@ export function parseCommand(body: string): Command | null {
       return {
         type: 'schedule',
         amount: scheduleMatch[1],
-        token: scheduleMatch[2] as 'pyusd' | 'usdc',
+        token: scheduleMatch[2] as 'pyusd',
         recipient: scheduleMatch[3].trim(),
         scheduledFor,
       };

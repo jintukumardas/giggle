@@ -32,8 +32,6 @@ export function getTokenAddress(token: string): string {
   const tokenUpper = token.toUpperCase();
   if (tokenUpper === 'PYUSD') {
     return config.blockchain.pyusdAddress;
-  } else if (tokenUpper === 'USDC') {
-    return config.blockchain.usdcAddress;
   }
   throw new Error(`Unknown token: ${token}`);
 }

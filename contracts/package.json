@@ -14,7 +14,8 @@
     "deploy:sepolia": "hardhat ignition deploy ignition/modules/GiggleGiftCoupon.ts --network sepolia",
     "deploy:sepolia:all": "hardhat ignition deploy ignition/modules/DeployAll.ts --network sepolia",
     "deploy:mock": "hardhat ignition deploy ignition/modules/MockERC20.ts --network localhost",
-    "verify:sepolia": "hardhat verify --network sepolia"
+    "verify:sepolia": "hardhat verify --network sepolia",
+    "add-pyusd": "hardhat run scripts/add-pyusd-token.ts --network sepolia"
   },
   "keywords": [
     "hardhat",

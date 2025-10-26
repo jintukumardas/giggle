@@ -58,19 +58,23 @@ Giggle bridges the gap between traditional messaging and decentralized finance b
 | `help` | Display help information | `help` |
 | `balance` | Check PYUSD and ETH balance | `balance` or `What's my balance?` |
 | `account` | View account details and address | `Show my account` |
-| `send` | Send PYUSD to phone number | `Send $10 to +1234567890` |
-| `request` | Request PYUSD from someone | `Request $20 from +1234567890` |
+| `send` | Send PYUSD to phone number | `Send $10 to +91234567890` |
+| `request` | Request PYUSD from someone | `Request $20 from +91234567890` |
 | `history` | View transaction history | `Show transaction history` |
 | `set pin` | Set up security PIN (required) | `Set PIN 1234` |
 | `confirm` | Confirm pending transaction | `confirm` or enter your PIN |
 | `cancel` | Cancel pending transaction | `cancel` |
+| `create coupon` | Create a gift coupon | `Create gift coupon $25` or `I would like to gift a coupon` |
+| `redeem coupon` | Redeem a gift coupon | `Redeem coupon ABC123` |
+| `my coupons` | List all your gift coupons | `Show my coupons` or `My coupons` |
+| `check coupon` | Check coupon status | `Check coupon ABC123` |
 
 ### Supported Recipient Formats
 
 | Format | Example | Description |
 |--------|---------|-------------|
-| Phone (US) | `+1234567890` | E.164 formatted phone number |
-| Phone (Local) | `(123) 456-7890` | US local format (auto-converted) |
+| Phone  | `+91234567890` | E.164 formatted phone number |
+| Phone  | `(9123) 456-7890` | US local format (auto-converted) |
 
 ### Supported Digital Currency
 
@@ -134,7 +138,7 @@ Giggle bridges the gap between traditional messaging and decentralized finance b
 
 ### Prerequisites
 
-- Node.js 18 or higher
+- Node.js 22
 - npm package manager
 - Twilio account (free sandbox available)
 - ngrok for local webhook testing

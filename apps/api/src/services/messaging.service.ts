@@ -111,6 +111,14 @@ Send and receive PYUSD using just phone numbers. No wallet addresses needed!
 • "Show my transaction history"
 • "Request $20 from +1987654321"
 
+🎁 *Gift Coupons:*
+
+• "Create gift coupon $25" - Create a gift coupon
+• "I would like to gift a coupon" - Create $5 coupon (default)
+• "Redeem coupon ABC123" - Redeem a gift coupon
+• "Show my coupons" - List all your gift coupons
+• "Check coupon ABC123" - Check coupon status
+
 🔐 *Security:*
 
 • "Set PIN 1234" - Set up a 4-6 digit PIN
@@ -127,17 +135,17 @@ Send and receive PYUSD using just phone numbers. No wallet addresses needed!
   getOnboardingWelcomeMessage(): string {
     return `🎉 *Welcome to Giggle Pay!*
 
-Your simple, secure way to send and receive digital payments via WhatsApp.
+Your simple, secure way to send and receive PYUSD via WhatsApp.
 
 💡 *What is Giggle Pay?*
-- Send money instantly using just phone numbers
+- Send PYUSD instantly using just phone numbers
 - No complicated wallet addresses needed
 - Secure payments with PIN protection
-- Powered by blockchain technology
+- Powered by blockchain technology (Ethereum Sepolia)
 
-Let's get you set up in just a few quick steps!
+Let's get you set up quickly!
 
-📍 *Step 1 of 3: Security Setup*
+📍 *Security Setup*
 
 Please reply with "Continue" to proceed.`;
   }
@@ -146,20 +154,7 @@ Please reply with "Continue" to proceed.`;
    * Format PIN setup message
    */
   getOnboardingPinMessage(): string {
-    return `🔐 *Step 2 of 3: Set Your PIN*
-
-For your security, you need to set up a 4-6 digit PIN.
-
-Your PIN will be required to:
-- Confirm all transactions
-- Protect your account
-
-💬 *How to set your PIN:*
-Reply with: "Set PIN 1234"
-
-(Replace 1234 with your own 4-6 digit PIN)
-
-🔒 Keep your PIN safe and don't share it with anyone!`;
+    return `🔐 *Set Your PIN*\n\nFor your security, you need to set up a 4-6 digit PIN.\n\nYour PIN will be required to:\n- Confirm all transactions\n- Protect your account\n\n💬 *How to set your PIN:*\nReply with: "Set PIN 1234"\n\n(Replace 1234 with your own 4-6 digit PIN)\n\n🔒 Keep your PIN safe and don't share it with anyone!`;
   }
 
   /**
@@ -192,24 +187,16 @@ Select your preferred network for transactions:
   getOnboardingTokenMessage(): string {
     return `💰 *Final Step: Default Token*
 
-Choose your preferred stablecoin:
+Your default stablecoin:
 
-*PYUSD* ⭐ (Recommended)
+*PYUSD* ⭐
 - PayPal USD stablecoin
 - 1 PYUSD = 1 USD
-- Widely accepted
-
-*USDC*
-- Circle USD stablecoin
-- 1 USDC = 1 USD
-- Industry standard
+- Widely accepted and secure
 
 💬 Reply with:
-- "PYUSD" (recommended)
-- "USDC"
-- "Skip" to use default (PYUSD)
-
-You can change this later!`;
+- "PYUSD" to continue
+- "Skip" to use default (PYUSD)`;
   }
 
   /**

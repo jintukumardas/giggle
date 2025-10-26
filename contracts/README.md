@@ -60,12 +60,15 @@ Main contract for creating and redeeming gift coupons.
 
 ### Deployed Contracts
 
-> **Note**: Update this table after deployment
+| Contract | Network | Address | Deployed 
+|----------|---------|---------|----------
+| GiggleGiftCoupon | Sepolia | [`0x80Cd8c4bf5e927F24A8d7c414c42eA616c42B473`](https://sepolia.etherscan.io/address/0x80Cd8c4bf5e927F24A8d7c414c42eA616c42B473) | ✅
+| GiggleGiftCoupon | Mainnet | `TBD` | ❌ | ❌ |
 
-| Contract | Network | Address 
-|----------|---------|---------
-| GiggleGiftCoupon | Sepolia | `TBD` 
-| GiggleGiftCoupon | Mainnet | `TBD`
+**Verify on Etherscan:**
+```bash
+npx hardhat verify --network sepolia 0x80Cd8c4bf5e927F24A8d7c414c42eA616c42B473
+```
 
 ### Supported Tokens
 

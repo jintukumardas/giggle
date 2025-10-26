@@ -54,9 +54,8 @@ export const config: AppConfig = {
     apiKey: getEnv('OPENAI_API_KEY', ''),
   },
   pinata: {
-    apiKey: getEnv('PINATA_API_KEY', ''),
-    secretKey: getEnv('PINATA_SECRET_KEY', ''),
-    gateway: getEnv('PINATA_GATEWAY', 'https://gateway.pinata.cloud'),
+    jwt: getEnv('PINATA_JWT', ''),
+    gateway: getEnv('PINATA_GATEWAY', ''), // Use custom gateway from env, no fallback
   },
   giftCoupon: {
     contractAddress: getEnv('GIFT_COUPON_CONTRACT_ADDRESS', ''),

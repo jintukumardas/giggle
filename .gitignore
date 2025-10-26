@@ -11,6 +11,8 @@ node_modules/
 dist/
 build/
 *.tsbuildinfo
+artifacts/
+ignition/
 
 # Logs
 logs/

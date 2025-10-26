@@ -22,7 +22,7 @@ const GIFT_COUPON_ABI = [
 export interface CreateCouponParams {
   wallet: ethers.Wallet;
   amount: string;
-  token: 'PYUSD' | 'USDC';
+  token: 'PYUSD';
   message?: string;
   creatorPhone?: string;
   expiryDays?: number; // 0 = no expiry
@@ -57,12 +57,10 @@ export class GiftCouponService {
   }
 
   /**
-   * Get token address by symbol
+   * Get token address (PYUSD only)
    */
-  private getTokenAddress(token: 'PYUSD' | 'USDC'): string {
-    return token === 'PYUSD'
-      ? config.blockchain.pyusdAddress
-      : config.blockchain.usdcAddress;
+  private getTokenAddress(): string {
+    return config.blockchain.pyusdAddress;
   }
 
   /**
@@ -106,10 +104,10 @@ export class GiftCouponService {
       wallet
     );
 
-    // Get token address
-    const tokenAddress = this.getTokenAddress(token);
+    // Get token address (PYUSD only)
+    const tokenAddress = this.getTokenAddress();
 
-    // Convert amount to wei (assuming 6 decimals for PYUSD/USDC)
+    // Convert amount to wei (assuming 6 decimals for PYUSD)
     const amountWei = ethers.parseUnits(amount, 6);
 
     // Calculate expiration timestamp
@@ -212,7 +210,7 @@ export class GiftCouponService {
       this.provider
     );
 
-    const [exists, isValid, tokenAddress, amountWei, metadataURI, expiresAtTimestamp, creator] =
+    const [exists, isValid, _tokenAddress, amountWei, metadataURI, expiresAtTimestamp, creator] =
       await contract.checkCoupon(code);
 
     if (!exists) {
@@ -227,8 +225,8 @@ export class GiftCouponService {
       };
     }
 
-    // Get token symbol
-    const token = tokenAddress === config.blockchain.pyusdAddress ? 'PYUSD' : 'USDC';
+    // Only PYUSD is supported
+    const token = 'PYUSD';
 
     // Convert amount from wei
     const amount = ethers.formatUnits(amountWei, 6);

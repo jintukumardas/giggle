@@ -4,8 +4,8 @@
   "private": true,
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "npm run db:init && tsc",
+    "dev": "npm rebuild better-sqlite3 && tsx watch src/index.ts",
+    "build": "npm rebuild better-sqlite3 && npm run db:init && tsc",
     "start": "node dist/index.js",
     "db:init": "tsx src/db/init.ts",
     "db:migrate:pin": "tsx src/db/migrate-add-pin.ts",

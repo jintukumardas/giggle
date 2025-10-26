@@ -19,22 +19,24 @@ export interface CouponMetadata {
 }
 
 export class IPFSService {
-  private readonly pinataApiKey: string;
-  private readonly pinataSecretKey: string;
+  private readonly pinataJwt: string;
   private readonly pinataGateway: string;
 
   constructor() {
-    this.pinataApiKey = config.pinata?.apiKey || '';
-    this.pinataSecretKey = config.pinata?.secretKey || '';
-    this.pinataGateway = config.pinata?.gateway || 'https://gateway.pinata.cloud';
+    this.pinataJwt = config.pinata?.jwt || '';
+    this.pinataGateway = config.pinata?.gateway || '';
+
+    if (this.pinataJwt && !this.pinataGateway) {
+      console.warn('⚠️  PINATA_GATEWAY not configured. IPFS content retrieval will fail.');
+    }
   }
 
   /**
    * Upload coupon metadata to IPFS
    */
   async uploadCouponMetadata(metadata: CouponMetadata): Promise<string> {
-    if (!this.pinataApiKey || !this.pinataSecretKey) {
-      console.warn('Pinata credentials not configured, using mock IPFS');
+    if (!this.pinataJwt) {
+      console.warn('Pinata JWT not configured, using mock IPFS');
       // For development: return a mock CID
       return `mock://ipfs/${Buffer.from(JSON.stringify(metadata)).toString('base64')}`;
     }
@@ -58,8 +60,7 @@ export class IPFSService {
         {
           headers: {
             'Content-Type': 'application/json',
-            pinata_api_key: this.pinataApiKey,
-            pinata_secret_api_key: this.pinataSecretKey,
+            'Authorization': `Bearer ${this.pinataJwt}`,
           },
         }
       );
@@ -84,9 +85,13 @@ export class IPFSService {
         return JSON.parse(jsonStr);
       }
 
-      // Convert ipfs:// to HTTP gateway URL
+      if (!this.pinataGateway) {
+        throw new Error('PINATA_GATEWAY not configured. Cannot retrieve IPFS content.');
+      }
+
+      // Convert ipfs:// to HTTP gateway URL using ONLY the configured gateway
       const ipfsHash = ipfsUri.replace('ipfs://', '');
-      const url = `${this.pinataGateway}/ipfs/${ipfsHash}`;
+      const url = `https://${this.pinataGateway}/ipfs/${ipfsHash}`;
 
       const response = await axios.get(url);
       return response.data;
@@ -97,31 +102,34 @@ export class IPFSService {
   }
 
   /**
-   * Get HTTP URL for IPFS content
+   * Get HTTP URL for IPFS content using ONLY the configured Pinata gateway
    */
   getHttpUrl(ipfsUri: string): string {
     if (ipfsUri.startsWith('mock://ipfs/')) {
       return ipfsUri;
     }
 
+    if (!this.pinataGateway) {
+      throw new Error('PINATA_GATEWAY not configured. Cannot generate IPFS URL.');
+    }
+
     const ipfsHash = ipfsUri.replace('ipfs://', '');
-    return `${this.pinataGateway}/ipfs/${ipfsHash}`;
+    return `https://${this.pinataGateway}/ipfs/${ipfsHash}`;
   }
 
   /**
    * Test Pinata connection
    */
   async testConnection(): Promise<boolean> {
-    if (!this.pinataApiKey || !this.pinataSecretKey) {
-      console.log('Pinata not configured, using mock mode');
+    if (!this.pinataJwt) {
+      console.log('Pinata JWT not configured, using mock mode');
       return true;
     }
 
     try {
       await axios.get('https://api.pinata.cloud/data/testAuthentication', {
         headers: {
-          pinata_api_key: this.pinataApiKey,
-          pinata_secret_api_key: this.pinataSecretKey,
+          'Authorization': `Bearer ${this.pinataJwt}`,
         },
       });
       console.log('✓ Pinata connection successful');
