@@ -157,6 +157,25 @@ export interface TwilioStatusCallback {
   ErrorMessage?: string;
 }
 
+// Gift Coupon types
+export type CouponStatus = 'active' | 'redeemed' | 'expired' | 'cancelled';
+
+export interface GiftCoupon {
+  id: string;
+  code: string;
+  creatorId: string;
+  amount: string;
+  token: TokenType;
+  message?: string;
+  status: CouponStatus;
+  redeemedBy?: string;
+  redeemedAt?: Date;
+  expiresAt?: Date;
+  txHash?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Config types
 export interface AppConfig {
   port: number;
@@ -197,5 +216,13 @@ export interface AppConfig {
   };
   openai: {
     apiKey: string;
+  };
+  pinata: {
+    apiKey: string;
+    secretKey: string;
+    gateway: string;
+  };
+  giftCoupon: {
+    contractAddress: string;
   };
 }

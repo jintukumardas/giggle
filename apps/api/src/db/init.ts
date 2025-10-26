@@ -133,6 +133,26 @@ try {
   `);
   console.log('✓ audit_logs table created');
 
+  // Create gift_coupons table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS gift_coupons (
+      id TEXT PRIMARY KEY,
+      code TEXT NOT NULL UNIQUE,
+      creator_id TEXT NOT NULL REFERENCES users(id),
+      amount TEXT NOT NULL,
+      token TEXT NOT NULL,
+      message TEXT,
+      status TEXT NOT NULL,
+      redeemed_by TEXT REFERENCES users(id),
+      redeemed_at INTEGER,
+      expires_at INTEGER,
+      tx_hash TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+  `);
+  console.log('✓ gift_coupons table created');
+
   // Verify all tables
   console.log('\n📊 Verifying tables...\n');
   const tables = db.prepare(`

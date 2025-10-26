@@ -53,4 +53,12 @@ export const config: AppConfig = {
   openai: {
     apiKey: getEnv('OPENAI_API_KEY', ''),
   },
+  pinata: {
+    apiKey: getEnv('PINATA_API_KEY', ''),
+    secretKey: getEnv('PINATA_SECRET_KEY', ''),
+    gateway: getEnv('PINATA_GATEWAY', 'https://gateway.pinata.cloud'),
+  },
+  giftCoupon: {
+    contractAddress: getEnv('GIFT_COUPON_CONTRACT_ADDRESS', ''),
+  },
 };

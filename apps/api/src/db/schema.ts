@@ -78,6 +78,22 @@ export const auditLogs = sqliteTable('audit_logs', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
+export const giftCoupons = sqliteTable('gift_coupons', {
+  id: text('id').primaryKey(),
+  code: text('code').notNull().unique(), // 8-character alphanumeric code
+  creatorId: text('creator_id').notNull().references(() => users.id),
+  amount: text('amount').notNull(), // stored as string to avoid precision loss
+  token: text('token').notNull(), // 'PYUSD' | 'USDC'
+  message: text('message'), // Optional message from creator
+  status: text('status').notNull(), // 'active' | 'redeemed' | 'expired' | 'cancelled'
+  redeemedBy: text('redeemed_by').references(() => users.id),
+  redeemedAt: integer('redeemed_at', { mode: 'timestamp' }),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }), // Optional expiration
+  txHash: text('tx_hash'), // Transaction hash when redeemed
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   addressBook: many(addressBook),
@@ -85,6 +101,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   pendingIntents: many(pendingIntents),
   dailySpending: many(dailySpending),
   auditLogs: many(auditLogs),
+  createdCoupons: many(giftCoupons, { relationName: 'creator' }),
+  redeemedCoupons: many(giftCoupons, { relationName: 'redeemer' }),
 }));
 
 export const addressBookRelations = relations(addressBook, ({ one }) => ({
@@ -119,5 +137,18 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   user: one(users, {
     fields: [auditLogs.userId],
     references: [users.id],
+  }),
+}));
+
+export const giftCouponsRelations = relations(giftCoupons, ({ one }) => ({
+  creator: one(users, {
+    fields: [giftCoupons.creatorId],
+    references: [users.id],
+    relationName: 'creator',
+  }),
+  redeemer: one(users, {
+    fields: [giftCoupons.redeemedBy],
+    references: [users.id],
+    relationName: 'redeemer',
   }),
 }));
