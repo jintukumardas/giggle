@@ -29,7 +29,7 @@ pnpm-debug.log*
 Thumbs.db
 
 # Database
-*.db
+*.db*
 *.sqlite
 *.sqlite3
 

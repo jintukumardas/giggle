@@ -80,6 +80,9 @@ export type UnlockCommand = z.infer<typeof UnlockCommandSchema>;
 export type HelpCommand = z.infer<typeof HelpCommandSchema>;
 
 // User types
+export type OnboardingStep = 'welcome' | 'pin' | 'network' | 'token' | 'completed';
+export type NetworkType = 'sepolia' | 'mainnet';
+
 export interface User {
   id: string;
   phoneNumber: string;
@@ -89,6 +92,11 @@ export interface User {
   litPkpPublicKey?: string;
   dailyLimit: number;
   isLocked: boolean;
+  // Onboarding fields
+  onboardingCompleted: boolean;
+  onboardingStep: OnboardingStep;
+  defaultNetwork: NetworkType;
+  defaultToken: TokenType;
   createdAt: Date;
   updatedAt: Date;
 }

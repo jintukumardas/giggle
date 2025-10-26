@@ -99,7 +99,7 @@ export class MessagingService {
    * Format help message
    */
   getHelpMessage(): string {
-    return `👋 *Welcome to PYUSD Wallet!*
+    return `👋 *Welcome to Giggle Pay!*
 
 Send and receive PYUSD using just phone numbers. No wallet addresses needed!
 
@@ -119,6 +119,159 @@ Send and receive PYUSD using just phone numbers. No wallet addresses needed!
 📱 *Your phone number is your account* - we automatically create and manage your Ethereum wallet for you!
 
 ⚠️ *Ethereum Sepolia testnet only. No real money.*`;
+  }
+
+  /**
+   * Format onboarding welcome message
+   */
+  getOnboardingWelcomeMessage(): string {
+    return `🎉 *Welcome to Giggle Pay!*
+
+Your simple, secure way to send and receive digital payments via WhatsApp.
+
+💡 *What is Giggle Pay?*
+- Send money instantly using just phone numbers
+- No complicated wallet addresses needed
+- Secure payments with PIN protection
+- Powered by blockchain technology
+
+Let's get you set up in just a few quick steps!
+
+📍 *Step 1 of 3: Security Setup*
+
+Please reply with "Continue" to proceed.`;
+  }
+
+  /**
+   * Format PIN setup message
+   */
+  getOnboardingPinMessage(): string {
+    return `🔐 *Step 2 of 3: Set Your PIN*
+
+For your security, you need to set up a 4-6 digit PIN.
+
+Your PIN will be required to:
+- Confirm all transactions
+- Protect your account
+
+💬 *How to set your PIN:*
+Reply with: "Set PIN 1234"
+
+(Replace 1234 with your own 4-6 digit PIN)
+
+🔒 Keep your PIN safe and don't share it with anyone!`;
+  }
+
+  /**
+   * Format network selection message
+   */
+  getOnboardingNetworkMessage(): string {
+    return `🌐 *Step 3 of 3: Choose Your Network*
+
+Select your preferred network for transactions:
+
+*Sepolia Testnet* ⭐ (Recommended)
+- Free testnet for learning and testing
+- No real money involved
+- Great for getting started
+
+*Ethereum Mainnet*
+- Real transactions with real money
+- Requires ETH for gas fees
+- For experienced users
+
+💬 Reply with:
+- "Sepolia" for testnet (recommended)
+- "Mainnet" for real transactions
+- "Skip" to use default (Sepolia)`;
+  }
+
+  /**
+   * Format token selection message
+   */
+  getOnboardingTokenMessage(): string {
+    return `💰 *Final Step: Default Token*
+
+Choose your preferred stablecoin:
+
+*PYUSD* ⭐ (Recommended)
+- PayPal USD stablecoin
+- 1 PYUSD = 1 USD
+- Widely accepted
+
+*USDC*
+- Circle USD stablecoin
+- 1 USDC = 1 USD
+- Industry standard
+
+💬 Reply with:
+- "PYUSD" (recommended)
+- "USDC"
+- "Skip" to use default (PYUSD)
+
+You can change this later!`;
+  }
+
+  /**
+   * Format onboarding completion message
+   */
+  getOnboardingCompletionMessage(walletAddress: string, explorerUrl: string): string {
+    return `✅ *Setup Complete!*
+
+Welcome to Giggle Pay! Your account is ready to use.
+
+🎊 *You're all set!*
+
+💳 *Your Wallet:*
+Address: ${walletAddress}
+
+🔍 View on Explorer:
+${explorerUrl}
+
+💬 *Quick Start:*
+- "Send $10 to +1234567890" - Send money
+- "What's my balance?" - Check balance
+- "Show my account" - View wallet details
+- "Help" - See all commands
+
+📱 *Your phone number is your account* - we manage your blockchain wallet securely for you!
+
+Start sending and receiving payments now! 🚀`;
+  }
+
+  /**
+   * Format PIN setup success during onboarding
+   */
+  getOnboardingPinSuccessMessage(): string {
+    return `✅ *PIN Set Successfully!*
+
+Your PIN has been securely saved.
+
+🔐 You'll need to enter it to confirm all transactions.
+
+Moving to next step...`;
+  }
+
+  /**
+   * Format network selection success
+   */
+  getOnboardingNetworkSuccessMessage(network: string): string {
+    return `✅ *Network Selected: ${network}*
+
+Your default network has been set.
+
+Moving to final step...`;
+  }
+
+  /**
+   * Format token selection success
+   */
+  getOnboardingTokenSuccessMessage(token: string): string {
+    return `✅ *Default Token: ${token}*
+
+Your preferred stablecoin has been set.
+
+Finalizing your account...`;
   }
 
   /**

@@ -5,8 +5,11 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "npm run db:init && tsc",
     "start": "node dist/index.js",
+    "db:init": "tsx src/db/init.ts",
+    "db:migrate:pin": "tsx src/db/migrate-add-pin.ts",
+    "db:migrate:onboarding": "tsx src/db/migrate-add-onboarding.ts",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

@@ -10,6 +10,11 @@ export const users = sqliteTable('users', {
   litPkpPublicKey: text('lit_pkp_public_key'),
   dailyLimit: real('daily_limit').default(100),
   isLocked: integer('is_locked', { mode: 'boolean' }).default(false),
+  // Onboarding fields
+  onboardingCompleted: integer('onboarding_completed', { mode: 'boolean' }).default(false),
+  onboardingStep: text('onboarding_step').default('welcome'), // 'welcome' | 'pin' | 'network' | 'token' | 'completed'
+  defaultNetwork: text('default_network').default('sepolia'), // 'sepolia' | 'mainnet'
+  defaultToken: text('default_token').default('PYUSD'), // 'PYUSD' | 'USDC'
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });

@@ -25,6 +25,11 @@ export class UserService {
       litPkpPublicKey: undefined,
       dailyLimit: 100,
       isLocked: false,
+      // Onboarding defaults
+      onboardingCompleted: false,
+      onboardingStep: 'welcome',
+      defaultNetwork: 'sepolia',
+      defaultToken: 'PYUSD',
       createdAt: now,
       updatedAt: now,
     };

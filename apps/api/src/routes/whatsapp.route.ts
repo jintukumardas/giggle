@@ -7,6 +7,7 @@ import { walletService } from '../services/wallet.service';
 import { pendingTransactionService } from '../services/pending-transaction.service';
 import { transactionService } from '../services/transaction.service';
 import { pinService } from '../services/pin.service';
+import { onboardingService } from '../services/onboarding.service';
 import { TwilioWebhookPayload } from '../types';
 import { parsePhoneNumber } from 'libphonenumber-js';
 
@@ -30,6 +31,15 @@ router.post('/', async (req: Request, res: Response) => {
 
     // Log the interaction
     await userService.logAudit(user.id, 'message_received', { body: Body }, MessageSid);
+
+    // Check if user needs onboarding
+    if (onboardingService.needsOnboarding(user)) {
+      await handleOnboarding(user.id, phoneNumber, Body, twiml);
+      const twimLString = twiml.toString();
+      console.log('Onboarding TwiML response:', twimLString);
+      res.type('text/xml').send(twimLString);
+      return;
+    }
 
     // Parse user intent with OpenAI
     const intent = await openaiService.parseIntent(Body);
@@ -659,6 +669,149 @@ async function handleConfirmWithPin(
   } catch (error) {
     console.error('Error handling PIN confirmation:', error);
     twiml.message(messagingService.formatErrorMessage('Could not confirm transaction. Please try again.'));
+  }
+}
+
+/**
+ * Handle onboarding flow
+ */
+async function handleOnboarding(
+  userId: string,
+  phoneNumber: string,
+  message: string,
+  twiml: MessagingResponse
+): Promise<void> {
+  try {
+    const user = await userService.getUserById(userId);
+    if (!user) return;
+
+    const currentStep = onboardingService.getCurrentStep(user);
+    const messageLower = message.toLowerCase().trim();
+
+    console.log('Onboarding:', { userId, currentStep, message: messageLower });
+
+    switch (currentStep) {
+      case 'welcome':
+        // Show welcome message and advance to PIN setup
+        const welcomeMsg = messagingService.getOnboardingWelcomeMessage();
+        console.log('Adding welcome message, length:', welcomeMsg.length);
+        twiml.message(welcomeMsg);
+        await onboardingService.advanceToNextStep(userId, 'welcome');
+        break;
+
+      case 'pin':
+        // Handle PIN setup
+        if (messageLower.includes('continue')) {
+          // User clicked continue from welcome, show PIN instructions
+          twiml.message(messagingService.getOnboardingPinMessage());
+        } else if (messageLower.startsWith('set pin')) {
+          // Extract PIN from message
+          const pinMatch = message.match(/set\s+pin\s+(\d{4,6})/i);
+          if (!pinMatch) {
+            twiml.message(
+              messagingService.formatErrorMessage(
+                'Invalid PIN format. PIN must be 4-6 digits.\n\n' +
+                'Example: "Set PIN 1234"'
+              )
+            );
+            return;
+          }
+
+          const pin = pinMatch[1];
+          if (!pinService.isValidPinFormat(pin)) {
+            twiml.message(
+              messagingService.formatErrorMessage(
+                'Invalid PIN format. PIN must be 4-6 digits.\n\n' +
+                'Example: "Set PIN 1234"'
+              )
+            );
+            return;
+          }
+
+          // Hash and save PIN
+          const pinHash = pinService.hashPin(pin);
+          await onboardingService.handlePinSetup(userId, pinHash);
+
+          twiml.message(messagingService.getOnboardingPinSuccessMessage());
+
+          // Automatically show network selection
+          twiml.message(messagingService.getOnboardingNetworkMessage());
+        } else {
+          // User sent something else, re-show PIN instructions
+          const pinMsg = messagingService.getOnboardingPinMessage();
+          console.log('Adding PIN message (else), length:', pinMsg.length);
+          twiml.message(pinMsg);
+        }
+        break;
+
+      case 'network':
+        // Handle network selection
+        if (messageLower.includes('sepolia')) {
+          await onboardingService.handleNetworkSelection(userId, 'sepolia');
+          twiml.message(messagingService.getOnboardingNetworkSuccessMessage('Sepolia Testnet'));
+          twiml.message(messagingService.getOnboardingTokenMessage());
+        } else if (messageLower.includes('mainnet')) {
+          await onboardingService.handleNetworkSelection(userId, 'mainnet');
+          twiml.message(messagingService.getOnboardingNetworkSuccessMessage('Ethereum Mainnet'));
+          twiml.message(messagingService.getOnboardingTokenMessage());
+        } else if (messageLower.includes('skip')) {
+          // Use default (sepolia)
+          await onboardingService.handleNetworkSelection(userId, 'sepolia');
+          twiml.message(messagingService.getOnboardingNetworkSuccessMessage('Sepolia Testnet (default)'));
+          twiml.message(messagingService.getOnboardingTokenMessage());
+        } else {
+          // Invalid response, re-show network selection
+          twiml.message(messagingService.getOnboardingNetworkMessage());
+        }
+        break;
+
+      case 'token':
+        // Handle token selection
+        if (messageLower.includes('pyusd')) {
+          await onboardingService.handleTokenSelection(userId, 'PYUSD');
+          await onboardingService.completeOnboarding(userId);
+
+          twiml.message(messagingService.getOnboardingTokenSuccessMessage('PYUSD'));
+
+          // Create wallet and show completion message
+          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
+          const explorerUrl = walletService.getAddressExplorerUrl(address);
+          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
+        } else if (messageLower.includes('usdc')) {
+          await onboardingService.handleTokenSelection(userId, 'USDC');
+          await onboardingService.completeOnboarding(userId);
+
+          twiml.message(messagingService.getOnboardingTokenSuccessMessage('USDC'));
+
+          // Create wallet and show completion message
+          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
+          const explorerUrl = walletService.getAddressExplorerUrl(address);
+          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
+        } else if (messageLower.includes('skip')) {
+          // Use default (PYUSD)
+          await onboardingService.handleTokenSelection(userId, 'PYUSD');
+          await onboardingService.completeOnboarding(userId);
+
+          twiml.message(messagingService.getOnboardingTokenSuccessMessage('PYUSD (default)'));
+
+          // Create wallet and show completion message
+          const { address } = await walletService.getOrCreateWallet(userId, phoneNumber);
+          const explorerUrl = walletService.getAddressExplorerUrl(address);
+          twiml.message(messagingService.getOnboardingCompletionMessage(address, explorerUrl));
+        } else {
+          // Invalid response, re-show token selection
+          twiml.message(messagingService.getOnboardingTokenMessage());
+        }
+        break;
+
+      default:
+        // Should not reach here, but just in case, show welcome
+        twiml.message(messagingService.getOnboardingWelcomeMessage());
+        await onboardingService.updateStep(userId, 'welcome');
+    }
+  } catch (error) {
+    console.error('Error handling onboarding:', error);
+    twiml.message(messagingService.formatErrorMessage('An error occurred during setup. Please try again.'));
   }
 }
 
