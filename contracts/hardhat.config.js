@@ -3,12 +3,14 @@ import hardhatEthersChaiMatchersPlugin from "@nomicfoundation/hardhat-ethers-cha
 import hardhatIgnitionEthersPlugin from "@nomicfoundation/hardhat-ignition-ethers";
 import hardhatNetworkHelpersPlugin from "@nomicfoundation/hardhat-network-helpers";
 import hardhatVerifyPlugin from "@nomicfoundation/hardhat-verify";
+import hardhatMochaPlugin from "@nomicfoundation/hardhat-mocha";
 import dotenv from "dotenv";
 
 dotenv.config({ path: "../.env" });
 
 const config = {
   plugins: [
+    hardhatMochaPlugin,
     hardhatEthersPlugin,
     hardhatEthersChaiMatchersPlugin,
     hardhatIgnitionEthersPlugin,

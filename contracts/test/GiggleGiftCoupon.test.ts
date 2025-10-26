@@ -1,5 +1,8 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { network } from "hardhat";
+import * as helpers from "@nomicfoundation/hardhat-network-helpers";
+
+const { ethers } = await network.connect();
 
 describe("GiggleGiftCoupon", function () {
   let giftCoupon: any;
@@ -59,7 +62,7 @@ describe("GiggleGiftCoupon", function () {
       const newTokenAddress = ethers.Wallet.createRandom().address;
       await expect(
         giftCoupon.connect(creator).addSupportedToken(newTokenAddress)
-      ).to.be.reverted;
+      ).to.be.revertedWithCustomError(giftCoupon, "OwnableUnauthorizedAccount");
     });
 
     it("Should allow owner to remove supported tokens", async function () {
@@ -243,9 +246,11 @@ describe("GiggleGiftCoupon", function () {
     });
 
     it("Should reject expired coupon", async function () {
-      // Create expired coupon
+      // Create coupon that expires in 10 seconds
       const expiredCode = "EXPIRED1";
-      const pastTimestamp = Math.floor(Date.now() / 1000) - 86400; // 1 day ago
+      const currentBlock = await ethers.provider.getBlock("latest");
+      const currentTime = currentBlock?.timestamp || 0;
+      const expirationTime = currentTime + 10; // 10 seconds from now
 
       await mockToken.connect(creator).approve(await giftCoupon.getAddress(), amount);
       await giftCoupon.connect(creator).createCoupon(
@@ -253,8 +258,12 @@ describe("GiggleGiftCoupon", function () {
         await mockToken.getAddress(),
         amount,
         metadataURI,
-        pastTimestamp
+        expirationTime
       );
+
+      // Fast forward time by 11 seconds to make it expired
+      await ethers.provider.send("evm_increaseTime", [11]);
+      await ethers.provider.send("evm_mine", []);
 
       await expect(
         giftCoupon.connect(redeemer).redeemCoupon(expiredCode)

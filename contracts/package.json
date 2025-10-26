@@ -16,7 +16,12 @@
     "deploy:mock": "hardhat ignition deploy ignition/modules/MockERC20.ts --network localhost",
     "verify:sepolia": "hardhat verify --network sepolia"
   },
-  "keywords": ["hardhat", "ethereum", "smart-contracts", "solidity"],
+  "keywords": [
+    "hardhat",
+    "ethereum",
+    "smart-contracts",
+    "solidity"
+  ],
   "author": "",
   "license": "MIT",
   "description": "Gift Coupon Smart Contracts for Giggle Pay",
@@ -25,6 +30,7 @@
     "@nomicfoundation/hardhat-ethers-chai-matchers": "^3.0.0",
     "@nomicfoundation/hardhat-ignition": "^3.0.3",
     "@nomicfoundation/hardhat-ignition-ethers": "^3.0.3",
+    "@nomicfoundation/hardhat-mocha": "^3.0.4",
     "@nomicfoundation/hardhat-network-helpers": "^3.0.1",
     "@nomicfoundation/hardhat-verify": "^3.0.4",
     "@openzeppelin/contracts": "^5.4.0",
